@@ -1,77 +1,226 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 
-   <head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-      <title>Babylon Template</title>
+        <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                <title>Babylon Template</title>
 
-      <style>
-        html, body {
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
+                <style>
+                        html,
+                        body {
+                                overflow: hidden;
+                                width: 100%;
+                                height: 100%;
+                                margin: 0;
+                                padding: 0;
+                        }
 
-        #renderCanvas {
-            width: 100%;
-            height: 100%;
-            touch-action: none;
-        }
-    </style>
+                        #renderCanvas {
+                                width: 100%;
+                                height: 100%;
+                                touch-action: none;
+                        }
+                </style>
 
-    <script src="source/plugins/babylon.custom.js"></script>
-    <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+                <script src="source/plugins/babylon.custom.js"></script>
+                <script src="source/plugins/pep.js"></script>
 
-   </head>
+        </head>
 
-   <body>
+        <body>
 
-    <canvas id="renderCanvas" touch-action="none"></canvas> //touch-action="none" for best results from PEP
+                <canvas id="renderCanvas" touch-action="none"></canvas> //touch-action="none" for best results from PEP
 
-    <script>
+                <script>
 
-            var canvas = document.getElementById("renderCanvas"); // Get the canvas element 
+                        var canvas = document.getElementById("renderCanvas"); // Get the canvas element 
 
-            var engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
-
-
-            /******* Add the create scene function ******/
-            var createScene = function () {
-
-                        // Create the scene space
-                        var scene = new BABYLON.Scene(engine);
-
-                        // Add a camera to the scene and attach it to the canvas
-                        var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, BABYLON.Vector3.Zero(), scene);
-                        camera.attachControl(canvas, true);
-
-                        // Add lights to the scene
-                        var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
-                        var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 1, -1), scene);
+                        var engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
 
 
-                        // Add and manipulate meshes in the scene
-                        var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:2}, scene);
+                        /******* Add the create scene function ******/
+                        var createScene = function () {
 
-                        return scene;
-                };
+                                // Create the scene space
+                                var scene = new BABYLON.Scene(engine);
+                                scene.clearColor = new BABYLON.Color3(37 / 255, 42 / 255, 71 / 255);
 
-                /******* End of the create scene function ******/    
+                                // Add a camera to the scene and attach it to the canvas
+                                // var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, BABYLON.Vector3.Zero(), scene);
+                                var cameraArc = new BABYLON.ArcRotateCamera("ArcRotateCamera", Math.PI / 2, Math.PI / 8, 50, new BABYLON.Vector3.Zero(), scene);
+                                cameraArc.attachControl(canvas, true);
+                                cameraArc.setPosition(new BABYLON.Vector3(0, 0, -20));
+                                var autoRotationBehavior = new BABYLON.AutoRotationBehavior();
+                                autoRotationBehavior.idleRotationWaitTime = 0;
+                                autoRotationBehavior.idleRotationSpeed = -1;
+                                autoRotationBehavior.attach(cameraArc);
 
-                var scene = createScene(); //Call the createScene function
+                                cameraArc.useAutoRotationBehavior = true;
+                                cameraArc.lowerRadiusLimit = 10;
+                                cameraArc.upperRadiusLimit = 20;
 
-            engine.runRenderLoop(function () { // Register a render loop to repeatedly render the scene
-                    scene.render();
-            });
+                                // cameraArc.wheelPrecision = 0.01;
+                                // cameraArc.pinchPrecision = 25;
+                                // cameraArc.angularSensibilityX = 45.0;
+                                // cameraArc.angularSensibilityY = 45.0;
+                                // cameraArc.inertia = 0;
+
+                                // Add lights to the scene
+                                var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
+                                var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 1, -1), scene);
 
 
-            window.addEventListener("resize", function () { // Watch for browser/canvas resize events
-                    engine.resize();
-            });
-    </script>
+                                // Add and manipulate meshes in the scene
+                                // var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 2 }, scene);
 
-   </body>
+                                var assetManager = new BABYLON.AssetsManager(scene);
+                                assetManager.useDefaultLoadingScreen = true;
+                                assetManager.onFinish = function () {
+                                        // assetManager.load();
+                                };
+
+                                var parms = {
+                                        folder: "source/models/",
+                                        objName: "teeth.obj"
+                                };
+                                var objTask = assetManager.addMeshTask("add asset", "", parms.folder, parms.objName);
+
+                                objTask.onSuccess = function (task) {
+                                        var tmpObject = new BABYLON.Mesh(task.sceneFilename, scene);
+                                        task.loadedMeshes.forEach(function (item) {
+                                                console.log(tmpObject)
+                                                // BABYLON.Tags.AddTagsTo(item, tmpObject.name + " " + item.name);
+                                                BABYLON.Tags.AddTagsTo(item, tmpObject.name);
+                                                item.parent = tmpObject;
+                                        });
+                                        tmpObject.position = new BABYLON.Vector3.Zero();
+                                };
+                                assetManager.load();
+
+                                /********events ******/
+                                var startingPoint;
+                                var currentMesh;
+
+                                // var getGroundPosition = function () {
+                                //         // Use a predicate to get position on the ground
+                                //         var pickinfo = scene.pick(scene.pointerX, scene.pointerY, function (mesh) { return mesh == plane; });
+                                //         if (pickinfo.hit) {
+                                //                 return pickinfo.pickedPoint;
+                                //         }
+
+                                //         return null;
+                                // }
+
+                                var onPointerDown = function (evt) {
+                                        // console.log(evt);
+                                        currentMesh = null;
+                                        if (evt.button !== 0) { //鼠标左键
+                                                return;
+                                        }
+
+                                        // check if we are under a mesh
+                                        var pickInfo = scene.pick(scene.pointerX, scene.pointerY);
+                                        console.log(pickInfo)
+                                        if (pickInfo.hit) { //选中物体
+                                                // console.log( pickInfo.pickedMesh.matchesTagsQuery("teeth.obj && S_ZP_B") )
+                                                if ( pickInfo.pickedMesh.matchesTagsQuery && pickInfo.pickedMesh.matchesTagsQuery("teeth.obj") ) {
+                                                        console.log( pickInfo.pickedMesh.parent.name )
+                                                }
+                                        //         if (mode == 1) {
+                                        //                 if (pickInfo.pickedMesh.matchesTagsQuery && pickInfo.pickedMesh.matchesTagsQuery("S_ZP85.obj && S_ZP_B"))
+                                        //                         showDHJAnimation();
+                                        //                 return;
+                                        //         }
+                                        //         else if (mode == 2) {
+                                        //                 if (pickInfo.pickedMesh.matchesTagsQuery && pickInfo.pickedMesh.matchesTagsQuery("S_ZP85.obj && (S_ZP_C||S_ZP_D)")) {
+                                        //                         removeListeners();
+                                        //                         addFire();
+                                        //                 }
+                                        //                 return;
+                                        //         }
+                                        //         else if (pickInfo.pickedMesh.matchesTagsQuery && pickInfo.pickedMesh.matchesTagsQuery("S_ZP85.obj && (S_ZP_A||S_ZP_C||S_ZP_B)")) {
+                                        //                 if (chooseParts.indexOf(pickInfo.pickedMesh) > -1)
+                                        //                         return;
+                                        //                 else
+                                        //                         chooseParts.push(pickInfo.pickedMesh)
+                                        //                 hl.addMesh(pickInfo.pickedMesh, BABYLON.Color3.Green());
+
+                                        //                 if (chooseParts.length > 2) {
+                                        //                         setTimeout(function () {
+                                        //                                 showSuccess();
+                                        //                         }, 1000);
+
+                                        //                 }
+                                        //         }
+                                        //         else
+                                        //                 hl.addMesh(pickInfo.pickedMesh, BABYLON.Color3.Red());
+                                        }
+                                }
+
+                                var onPointerUp = function (evt) {
+
+                                        // if (currentMesh) {
+                                        //         var current = getGroundPosition(evt);
+                                        //         if (current.x > 80 && gamePartNames.indexOf(currentMesh.name) > -1) {
+                                        //                 addPart(currentMesh);
+                                        //                 if (currentMesh.name == "S_ZP_C")
+                                        //                         hl.removeMesh(currentMesh);
+                                        //         }
+                                        //         else {
+                                        //                 //back to old position
+                                        //                 var backAnimation = new TWEEN.Tween(currentMesh.position)
+                                        //                         .to({ x: 0, y: 0, z: 0 }, 600)
+                                        //                         .start();
+                                        //         }
+                                        //         console.log(current);
+                                        //         if (chooseParts.length > 2) {
+                                        //                 //success
+                                        //                 setTimeout(showSuccess, 800);
+                                        //         }
+                                        // }
+
+                                        // if (startingPoint) {
+                                        //         //            camera.attachControl(canvas, true);
+                                        //         startingPoint = null;
+                                        //         return;
+                                        // }
+
+                                }
+
+
+
+                                function addListeners() {
+                                        canvas.addEventListener("pointerdown", onPointerDown, false);
+                                        canvas.addEventListener("pointerup", onPointerUp, false);
+                                }
+
+                                function removeListeners() {
+                                        canvas.removeEventListener("pointerdown", onPointerDown);
+                                        canvas.removeEventListener("pointerup", onPointerUp);
+                                }
+
+                                scene.onDispose = function () {
+                                        removeListeners();
+                                }
+
+                                addListeners();
+
+                                return scene;
+                        };
+
+                        /******* End of the create scene function ******/
+
+                        var scene = createScene(); //Call the createScene function
+
+                        engine.runRenderLoop(function () { // Register a render loop to repeatedly render the scene
+                                scene.render();
+                        });
+
+                        window.addEventListener("resize", function () { // Watch for browser/canvas resize events
+                                engine.resize();
+                        });
+                </script>
+
+        </body>
 
 </html>
