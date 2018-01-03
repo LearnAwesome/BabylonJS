@@ -53,7 +53,32 @@
 
 
                         // Add and manipulate meshes in the scene
-                        var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:2}, scene);
+                        // var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:2}, scene);
+
+                        var assetManager = new BABYLON.AssetsManager(scene);
+                        assetManager.useDefaultLoadingScreen = false;
+                        assetManager.onProgress = function (remainingCount, totalCount, lastFinishedTask) {
+                                engine.loadingUIText = '正在加载，请稍后...';
+                        };
+                        assetManager.onFinish = function (a) {
+                                // parms.alreadyLoaded = true;
+                                // loading.classList.add('hide');
+                        };
+                        
+                        var alphaObjTask = assetManager.addMeshTask("add alpha", "", "xiao/", "zCV2.obj");
+                        // console.log(alphaObjTask)
+                        alphaObjTask.onSuccess = function (task) {
+                                var tmpObject = new BABYLON.Mesh(task.sceneFilename, scene);
+                                meshes = task.loadedMeshes;
+                                meshes.forEach(function(item) {
+                                        item.parent = tmpObject;
+                                });
+                                tmpObject.position = new BABYLON.Vector3(0, 0, 0);
+                        };
+
+                        assetManager.load();
+
+
 
                         return scene;
                 };
