@@ -1,4 +1,101 @@
 import * as BABYLON from 'babylonjs';
+import { arcRotateCameraFixer } from '../libs/tencentTouchFixers';
+
+// interface ICameraInput<TCamera extends BABYLON.Camera> {
+//     camera: TCamera;
+//     getClassName(): string;
+//     getTypeName(): string;
+//     getSimpleName(): string;
+//     attachControl: (element: HTMLCanvasElement, noPreventDefault?: boolean) => void;
+//     detachControl: (element: HTMLCanvasElement) => void;
+//     checkInputs?: () => void;
+// }
+class FreeCameraKeyboardRotateInput implements BABYLON.ICameraInput<BABYLON.FreeCamera> {
+    public camera: BABYLON.FreeCamera;
+    private _keys: Array<number> = [];
+    private _keysLeft: Array<number> = [37];
+    private _keysRight: Array<number> = [39];
+    private _sensibility: number = 0.001;
+    private _onKeyDown: null | ( (e: KeyboardEvent) => void );
+    private _onKeyUp: null | ( (e: KeyboardEvent) => void );
+    private _onLostFocus: (e: FocusEvent) => void;
+
+    constructor() {}
+
+    public getClassName(): string {
+        return 'FreeCamera';
+    }
+
+    public getTypeName(): string {
+        return 'FreeCameraKeyboardRotateInput';
+    }
+
+    public getSimpleName(): string {
+        return 'keyboardRotate';
+    }
+
+    public attachControl(element: HTMLCanvasElement, noPreventDefault?: boolean): void {
+        if (!this._onKeyDown) {
+            element.tabIndex = 1;
+            this._onKeyDown = (event: KeyboardEvent) => {
+                const { keyCode } = event;
+                if (this._keysLeft.includes(keyCode) || this._keysRight.includes(keyCode)) {
+                    const index = this._keys.indexOf(keyCode);
+                    if (index === -1) {
+                        this._keys.push(keyCode);
+                    }
+                    if (!noPreventDefault) {
+                        event.preventDefault();
+                    }
+                }
+            };
+            this._onKeyUp = (event: KeyboardEvent) => {
+                const { keyCode } = event;
+                if (this._keysLeft.includes(keyCode) || this._keysRight.includes(keyCode)) {
+                    const index = this._keys.indexOf(keyCode);
+                    if (index >= 0) {
+                        this._keys.splice(index, 1);
+                    }
+                    if (!noPreventDefault) {
+                        event.preventDefault();
+                    }
+                }
+            }
+
+            element.addEventListener('keydown', this._onKeyDown, false);
+            element.addEventListener('keyup', this._onKeyUp, false);
+            BABYLON.Tools.RegisterTopRootEvents([
+                { name: 'blur', handler: this._onLostFocus }
+            ]);
+        }
+    }
+
+    public detachControl(element: HTMLCanvasElement): void {
+        if (this._onKeyDown) {
+            element.removeEventListener('keydown', this._onKeyUp as (e: KeyboardEvent) => void);
+            element.removeEventListener('keyup', this._onKeyUp as (e: KeyboardEvent) => void);
+            BABYLON.Tools.RegisterTopRootEvents([
+                { name: 'blue', handler: this._onLostFocus }
+            ]);
+            this._keys = [];
+            this._onKeyDown = null;
+            this._onKeyUp = null;
+        }
+    }
+
+    public checkInputs(): void {
+        if (this._onKeyDown) {
+            this._keys.forEach(keyCode => {
+                if (this._keysLeft.includes(keyCode)) {
+                    this.camera.cameraRotation.y += this._sensibility;
+                }
+                if (this._keysRight.includes(keyCode)) {
+                    this.camera.cameraRotation.y -= this._sensibility;
+                }
+            });
+        }
+    }
+}
 
 export default class Game {
 
@@ -9,7 +106,7 @@ export default class Game {
 
     constructor(canvasElement: string) {
         this._canvas = document.querySelector(canvasElement) as HTMLCanvasElement;
-        this._engine = new BABYLON.Engine(this._canvas);
+        this._engine = new BABYLON.Engine(this._canvas, true, {}, true);
         this._scene = new BABYLON.Scene(this._engine);
         this._scene.ambientColor = new BABYLON.Color3(1, 1, 1);
         this.createBasicEnv();
@@ -18,7 +115,8 @@ export default class Game {
         // this.followCamera();
         // this.anaglyphCamera();
         // this.deviceOrientationCamera();
-        this.flyCamera();
+        // this.flyCamera();
+        this.customizeInputs();
     }
 
     private createBasicEnv(): void {
@@ -104,18 +202,18 @@ export default class Game {
     private anaglyphCamera(): void {
         // 3D眼镜专用相机
         BABYLON.MeshBuilder.CreateBox('box', {}, this._scene);
-        // const camera = new BABYLON.AnaglyphUniversalCamera(
-        //     'af_cam',
-        //     new BABYLON.Vector3(0, 1, -15),
-        //     0.033,
-        //     this._scene
-        // );
-        const camera = new BABYLON.AnaglyphArcRotateCamera(
+        const camera = new BABYLON.AnaglyphUniversalCamera(
             'af_cam',
-            -Math.PI / 4, Math.PI / 4, 10, BABYLON.Vector3.Zero(),
-            0.033, // 观察坐标空间系数: 左右眼空间间距
+            new BABYLON.Vector3(0, 1, -15),
+            0.033,
             this._scene
         );
+        // const camera = new BABYLON.AnaglyphArcRotateCamera(
+        //     'af_cam',
+        //     -Math.PI / 4, Math.PI / 4, 10, BABYLON.Vector3.Zero(),
+        //     0.033, // 观察坐标空间系数: 左右眼空间间距
+        //     this._scene
+        // );
         camera.attachControl(this._canvas, true);
     }
 
@@ -198,6 +296,17 @@ export default class Game {
         camera.attachControl(this._canvas, true);
     }
 
+    private customizeInputs(): void {
+        const sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {}, this._scene);
+        sphere.position.y = 1;
+        BABYLON.Mesh.CreateGround("ground", 4, 4, 2, this._scene);
+        const camera = new BABYLON.FreeCamera('sceneCamera', new BABYLON.Vector3(0, 3, -10), this._scene);
+        // const camera = new BABYLON.ArcRotateCamera('sceneCamera', Math.PI / 4, Math.PI / 4, 20, BABYLON.Vector3.Zero(), this._scene);
+        // const { inputs: inputsManager } = camera;
+        // arcRotateCameraFixer(camera);
+        camera.attachControl(this._canvas, true);
+    }
+
     public doRender(): void {
         this._engine.runRenderLoop(() => {
             this._scene.render();
@@ -208,3 +317,4 @@ export default class Game {
     }
 
 }
+

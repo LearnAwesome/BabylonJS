@@ -58,7 +58,7 @@ module.exports = {
 	resolve: {
 		extensions: ['.ts', '.js'],
 		alias: {
-			'pepjs': path.resolve(__dirname, '../node_modules/pepjs/dist/pep.min.js'),
+			'pepjs': path.resolve(__dirname, '../node_modules/pepjs/dist/pep.min.js')
 		}
 	},
 	plugins: [
