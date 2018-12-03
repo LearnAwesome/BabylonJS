@@ -19,10 +19,10 @@ export default class Game {
         // this.spotLight();
         // this.hemisphericLight();
         // this.lightControl();
-        // this.limitations();
+        this.limitations();
         // this.includedAndExcluded();
         // this.lightmap();
-        this.projectionTexture();
+        // this.projectionTexture();
     }
 
     private createBasicEnv(): void {
@@ -157,7 +157,7 @@ export default class Game {
         const material = new BABYLON.StandardMaterial("kosh", this._scene);
         material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         material.maxSimultaneousLights = 16;
-        const sphere = BABYLON.Mesh.CreateSphere("Sphere", 16, 3, this._scene);
+        const sphere = BABYLON.Mesh.CreateSphere("Sphere", 32, 6, this._scene);
         sphere.material = material;
 
         // Creating light sphere
