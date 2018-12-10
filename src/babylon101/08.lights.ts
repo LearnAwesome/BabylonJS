@@ -1,5 +1,5 @@
 import * as BABYLON from 'babylonjs';
-import { arcRotateCameraFixer } from '../libs/tencentTouchFixers';
+import { ArcRotateCameraFixer } from '../libs/tencentTouchFixers';
 
 export default class Game {
     private _canvas: HTMLCanvasElement;
@@ -12,7 +12,7 @@ export default class Game {
         this._engine = new BABYLON.Engine(this._canvas, true, {}, true);
         this._scene = new BABYLON.Scene(this._engine);
         this._camera = new BABYLON.ArcRotateCamera('arcam', 0, Math.PI / 4, 20, BABYLON.Vector3.Zero(), this._scene);
-        arcRotateCameraFixer(this._camera);
+        ArcRotateCameraFixer(this._camera);
         this._camera.attachControl(this._canvas);
         // this.pointLight();
         // this.directionLight();

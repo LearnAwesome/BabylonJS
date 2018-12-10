@@ -338,7 +338,7 @@ class ArcRotateCameraPointersInput implements ICameraInput<ArcRotateCamera> {
     }
 }
 
-export function arcRotateCameraFixer(camera: ArcRotateCamera): void {
+export function ArcRotateCameraFixer(camera: ArcRotateCamera): void {
     camera.inputs.removeByType('ArcRotateCameraPointersInput');
     camera.inputs.add(new ArcRotateCameraPointersInput());
 }

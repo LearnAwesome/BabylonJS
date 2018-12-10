@@ -1,5 +1,4 @@
 import * as BABYLON from 'babylonjs';
-// import { arcRotateCameraFixer } from '../libs/tencentTouchFixers';
 
 export default class Game {
 

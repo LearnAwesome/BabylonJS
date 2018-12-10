@@ -14,7 +14,8 @@ import 'pepjs';
 // import Game from './babylon101/11.intersectCollisionsMesh';
 // import Game from './babylon101/12.pickingCollisions';
 // import Game from './babylon101/13.raycasts';
-import Game from './babylon101/14.sprites';
+// import Game from './babylon101/14.sprites';
+import Game from './babylon101/15.particles';
 
 window.addEventListener('DOMContentLoaded', () => {
     const game = new Game('#renderCanvas');
