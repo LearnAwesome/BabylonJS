@@ -95,9 +95,9 @@ module.exports = {
 			}
 		}
 	},
-	// externals: {
-	// 	"oimo": true,
-	// 	"cannon": true,
-	// 	"earcut": true
-	// }
+	externals: {
+		"oimo": true,
+		"cannon": true,
+		"earcut": true
+	}
 };
